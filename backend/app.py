@@ -3,6 +3,8 @@ from flask_cors import CORS
 from config import Config
 from agents.repo_reader.repo_scaner import RepoScanner
 import os 
+from agents.llm.agent import MultiAIAgent
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -33,13 +35,23 @@ def analyze_repo():
         scanner = RepoScanner(repo_path)
         scan_result = scanner.scan()
         chunks = scanner.chunk_files(project_size)
+        agent = MultiAIAgent(code_model="openai", doc_model="gemini")
+        def progress_callback(current, total):
+            print(f"[AI Progress] {current}/{total} chunks processed")
+
+        # Analyzing code chunks
+        summaries = agent.analyze_chunks(chunks, progress_callback)
+
+        # Generating final document
+        final_doc = agent.generate_document(summaries)
 
         return jsonify({
-        "status": "ready_for_ai",
-        "total_files": len(scanner.files),
-        "total_chunks": len(chunks),
-        "chunks_preview": chunks[:5]
-    })
+            "status": "ready_for_ai",
+            "total_files": len(scanner.files),
+            "total_chunks": len(chunks),
+            "chunks_preview": summaries[:5],
+            "document": final_doc
+        })
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

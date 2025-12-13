@@ -1,11 +1,15 @@
-import os
-import requests
+import google.generativeai as genai
 from typing import Dict
+import os
 
 class GeminiAgent:
-    def __init__(self, api_key: str, api_url: str):
-        self.api_key = api_key
-        self.api_url = api_url
+    def __init__(self, api_key: str):
+        genai.configure(api_key=api_key)
+        print("Available models:")
+        for m in genai.list_models():
+            if 'generateContent' in m.supported_generation_methods:
+                print(f"  - {m.name}")
+        self.model = genai.GenerativeModel(os.getenv("GEMINI_MODEL","gemini-2.5-flash"))
 
     def summarize_chunk(self, chunk: Dict) -> str:
         prompt = f"""
@@ -14,14 +18,17 @@ Analyze the following {chunk['language']} code from {chunk['path']}
 
 {chunk['content']}
 
-Return a descriptive.
+Return a descriptive summary including:
+- Functions/classes present
+- Purpose of the code
+- Any potential notes or insights
 """
-        headers = {"Authorization": f"Bearer {self.api_key}"}
-        payload = {"prompt": prompt, "max_tokens": 500}
-
-        res = requests.post(self.api_url, json=payload, headers=headers)
-        res.raise_for_status()
-        data = res.json()
-        print("=========Summaries========")
-        print(data.get("summary", "No summary returned"))
-        return data.get("summary", "No summary returned")
+        try:
+            response = self.model.generate_content(prompt)
+            summary = response.text
+            print("=========Summaries========")
+            print(summary)
+            return summary
+        except Exception as e:
+            print(f"Error generating summary: {e}")
+            return f"Error: {str(e)}"

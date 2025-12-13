@@ -5,3 +5,4 @@ os
 openai
 gemini-ai
 requests
+google-generativeai

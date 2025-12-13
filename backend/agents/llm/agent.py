@@ -20,7 +20,7 @@ class MultiAIAgent:
         if model_name.lower() == "openai":
             return OpenAIAgent(self.openai_key, self.openai_endpoint, self.openai_deployment)
         elif model_name.lower() == "gemini":
-            return GeminiAgent(self.gemini_key, self.gemini_url)
+            return GeminiAgent(self.gemini_key)
         else:
             raise ValueError("Unsupported AI model")
 
@@ -36,8 +36,6 @@ class MultiAIAgent:
             summaries.append({**chunk, "summary": summary})
             if progress_callback:
                 progress_callback(idx + 1, total)
-        print("=========Summaries========")
-        print(summaries)
         return summaries
 
     def generate_document(self, summaries: List[Dict]) -> str:
