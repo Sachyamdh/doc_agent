@@ -14,7 +14,7 @@ export default function CircularProgress({ progress, label }: CircularProgressPr
     <div className="flex flex-col items-center space-y-2">
       <svg height={radius * 2} width={radius * 2}>
         <circle
-          stroke="#1f2937"
+          stroke="#35371fff"
           fill="transparent"
           strokeWidth={stroke}
           r={normalizedRadius}
@@ -22,7 +22,7 @@ export default function CircularProgress({ progress, label }: CircularProgressPr
           cy={radius}
         />
         <circle
-          stroke="#6366f1"
+          stroke="#68f163ff"
           fill="transparent"
           strokeWidth={stroke}
           strokeLinecap="round"
@@ -31,7 +31,7 @@ export default function CircularProgress({ progress, label }: CircularProgressPr
           cy={radius}
           strokeDasharray={circumference + " " + circumference}
           strokeDashoffset={strokeDashoffset}
-          style={{ transition: "stroke-dashoffset 0.5s ease" }}
+          style={{ transition: "stroke-dashoffset 2s ease" }}
         />
       </svg>
       <span className="text-sm text-text-primary">{label}</span>
