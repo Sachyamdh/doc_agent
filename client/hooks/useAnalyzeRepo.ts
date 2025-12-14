@@ -17,17 +17,16 @@ export function useAnalyzeRepo(onStepChange: (step: number) => void) {
 
       onStepChange(1);
       const chunkAndAnalyzeRes = await AnalyzeService.scan(repoPath);
-
       // onStepChange(2);
       // const chunkRes = await AnalyzeService.chunk(repoPath, projectSize);
 
       onStepChange(2);
-      const analyzeRes = await AnalyzeService.analyzeChunks(chunkAndAnalyzeRes.chunks,chunkAndAnalyzeRes.repoStructure );
-
+      const analyzeRes = await AnalyzeService.analyzeChunks(chunkAndAnalyzeRes.chunks,chunkAndAnalyzeRes.repo_structure );
+      console.log(analyzeRes)
       onStepChange(3);
-      const docRes = await AnalyzeService.generateDoc(analyzeRes.analysis_results);
+      const docRes = await AnalyzeService.generateDoc(analyzeRes.analysis_results,chunkAndAnalyzeRes.repo_structure);
 
-      return docRes.document;
+      return docRes.documentation;
     },
   });
 }

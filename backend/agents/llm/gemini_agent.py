@@ -1,3 +1,7 @@
+from typing import List, Dict, Optional
+import os
+import google.generativeai as genai
+
 class GeminiAgent:
     def __init__(self, api_key: str):
         genai.configure(api_key=api_key)

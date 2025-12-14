@@ -1,3 +1,7 @@
+from typing import List, Dict, Optional
+import os
+from openai import AzureOpenAI
+
 class OpenAIAgent:
     def __init__(self, api_key: str, endpoint: str, deployment: str):
         self.client = AzureOpenAI(
@@ -8,9 +12,6 @@ class OpenAIAgent:
         self.deployment = deployment
 
     def summarize_chunk(self, chunk: Dict) -> str:
-        """
-        OpenAI excels at: Structured analysis, code quality assessment, and detailed technical insights.
-        """
         prompt_text = f"""
 Analyze the following {chunk['language']} code from {chunk['path']} 
 (lines {chunk['start_line']}-{chunk['end_line']}):
@@ -35,9 +36,6 @@ Provide a detailed technical analysis covering:
         return response.choices[0].message.content
 
     def analyze_code_quality_and_improvements(self, all_summaries: List[Dict], repo_structure: Dict) -> str:
-        """
-        OpenAI's strength: Deep code quality analysis and specific, actionable improvements.
-        """
         combined_summaries = "\n\n".join([
             f"File: {s.get('file_path', 'Unknown')}\n{s.get('summary', '')}"
             for s in all_summaries

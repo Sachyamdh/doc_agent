@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from agents.repo_reader.repo_scaner import RepoScanner
 from agents.llm.agent import MultiAIAgent
 import os
+from utils.file_filter import get_repo_structure
 
 analyze_bp = Blueprint("analyze", __name__, url_prefix="/analyze")
 
@@ -11,9 +12,11 @@ def validate_repo():
     repo_path = data.get("repoPath")
 
     if not repo_path:
+        print("No repo path found")
         return jsonify({"error": "repoPath is required"}), 400
 
     if not os.path.exists(repo_path):
+        print("Repo path does not exist")
         return jsonify({"error": "repoPath does not exist"}), 400
 
     return jsonify({
@@ -22,25 +25,25 @@ def validate_repo():
     })
 
 
-@analyze_bp.route("/scan", methods=["POST"])
+@analyze_bp.route("/scan-and-chunk", methods=["POST"])
 def scan_repo():
     data = request.json
     repo_path = data.get("repoPath")
-
-    scanner = RepoScanner(repo_path)
-    scanner.scan()
-    chunks = scanner.chunk_files(project_size)
-    repo_structure = get_repo_structure(temp_dir)
-    
-    return jsonify({
-        "status": "prepared",
-        "chunks": chunks,
-        "repo_structure": repo_structure,
-        "metadata": {
-            "total_files": len(scanner.files),
-            "total_chunks": len(chunks)
-        }
-    }),200
+    try:
+        scanner = RepoScanner(repo_path)
+        scanner.scan()
+        chunks = scanner.chunk_files()
+        repo_structure = get_repo_structure(repo_path)
+        
+        return jsonify({
+            "status": "prepared",
+            "chunks": chunks,
+            "repo_structure": repo_structure,
+            "metadata": {
+                "total_files": len(scanner.files),
+                "total_chunks": len(chunks)
+            }
+        }),200
 
     except Exception as e:
         import traceback
@@ -72,13 +75,16 @@ def scan_repo():
 @analyze_bp.route("/analyze-chunks", methods=["POST"])
 def analyze_chunks():
     data = request.json
+    print(data.get("repoStructure"))
     chunks = data.get("chunks")
     repo_structure = data.get("repoStructure")
 
     if not chunks:
+        print("No repo path found")
         return jsonify({"error": "chunks are required"}), 400
     
     if not repo_structure:
+        print("Repo structure does not exist")
         return jsonify({"error": "repoStructure is required"}), 400
 
     agent = MultiAIAgent()
@@ -109,9 +115,11 @@ def generate_doc():
     repo_structure = data.get("repoStructure")
 
     if not analysis_results:
+        print("Analysis Results does not exist")
         return jsonify({"error": "analysisResults are required"}), 400
 
     if not repo_structure:
+        print("Repo structure does not exist")
         return jsonify({"error": "repoStructure is required"}), 400
 
     agent = MultiAIAgent()
