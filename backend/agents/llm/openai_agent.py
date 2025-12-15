@@ -1,17 +1,28 @@
 from typing import List, Dict, Optional
 import os
 from openai import AzureOpenAI
+from utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class OpenAIAgent:
     def __init__(self, api_key: str, endpoint: str, deployment: str):
-        self.client = AzureOpenAI(
-            api_key=api_key,
-            api_version="2023-07-01-preview",
-            azure_endpoint=endpoint
-        )
-        self.deployment = deployment
+        logger.info("Initializing OpenAIAgent")
+        try:
+            self.client = AzureOpenAI(
+                api_key=api_key,
+                api_version="2023-07-01-preview",
+                azure_endpoint=endpoint
+            )
+            self.deployment = deployment
+            logger.info(f"OpenAIAgent initialized with deployment: {deployment}")
+        except Exception as e:
+            logger.error(f"Failed to initialize OpenAIAgent: {str(e)}", exc_info=True)
+            raise
 
     def summarize_chunk(self, chunk: Dict) -> str:
+        logger.debug(f"Summarizing chunk from {chunk.get('path', 'unknown')} (lines {chunk.get('start_line', '?')}-{chunk.get('end_line', '?')})")
+        
         prompt_text = f"""
 Analyze the following {chunk['language']} code from {chunk['path']} 
 (lines {chunk['start_line']}-{chunk['end_line']}):
@@ -25,17 +36,26 @@ Provide a detailed technical analysis covering:
 - Potential bugs, security issues, or code smells
 - Best practices followed or violated
 """
-        response = self.client.chat.completions.create(
-            model=self.deployment,  
-            messages=[
-                {"role": "system", "content": "You are an expert code reviewer specializing in technical analysis, code quality, and best practices."},
-                {"role": "user", "content": prompt_text}
-            ],
-            temperature=0.3
-        )
-        return response.choices[0].message.content
+        try:
+            logger.debug(f"Making OpenAI API call for chunk summary (deployment: {self.deployment})")
+            response = self.client.chat.completions.create(
+                model=self.deployment,  
+                messages=[
+                    {"role": "system", "content": "You are an expert code reviewer specializing in technical analysis, code quality, and best practices."},
+                    {"role": "user", "content": prompt_text}
+                ],
+                temperature=0.3
+            )
+            result = response.choices[0].message.content
+            logger.debug(f"Chunk summary generated successfully, length: {len(result)} characters")
+            return result
+        except Exception as e:
+            logger.error(f"Error in summarize_chunk for {chunk.get('path', 'unknown')}: {str(e)}", exc_info=True)
+            raise
 
     def analyze_code_quality_and_improvements(self, all_summaries: List[Dict], repo_structure: Dict) -> str:
+        logger.info(f"Starting code quality analysis for {len(all_summaries)} summaries")
+        
         combined_summaries = "\n\n".join([
             f"File: {s.get('file_path', 'Unknown')}\n{s.get('summary', '')}"
             for s in all_summaries
@@ -44,6 +64,9 @@ Provide a detailed technical analysis covering:
         structure_text = "\n".join([
             f"{path}: {', '.join(files)}" for path, files in repo_structure.items()
         ])
+        
+        logger.debug(f"Combined summaries length: {len(combined_summaries)} characters")
+        logger.debug(f"Repository structure has {len(repo_structure)} directories")
         
         prompt_text = f"""
 You are conducting a comprehensive code quality review and improvement analysis.
@@ -117,17 +140,24 @@ Provide a detailed analysis in the following format:
 Be extremely specific and actionable in all recommendations.
 """
         
-        response = self.client.chat.completions.create(
-            model=self.deployment,
-            messages=[
-                {
-                    "role": "system", 
-                    "content": "You are a senior software engineer and code quality expert. Provide detailed, actionable feedback with specific examples."
-                },
-                {"role": "user", "content": prompt_text}
-            ],
-            temperature=0.3,
-            max_tokens=2500
-        )
-        
-        return response.choices[0].message.content
+        try:
+            logger.debug("Making OpenAI API call for quality analysis")
+            response = self.client.chat.completions.create(
+                model=self.deployment,
+                messages=[
+                    {
+                        "role": "system", 
+                        "content": "You are a senior software engineer and code quality expert. Provide detailed, actionable feedback with specific examples."
+                    },
+                    {"role": "user", "content": prompt_text}
+                ],
+                temperature=0.3,
+                max_tokens=2500
+            )
+            
+            result = response.choices[0].message.content
+            logger.info(f"Quality analysis completed successfully, length: {len(result)} characters")
+            return result
+        except Exception as e:
+            logger.error(f"Error in analyze_code_quality_and_improvements: {str(e)}", exc_info=True)
+            raise
