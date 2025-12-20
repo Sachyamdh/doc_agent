@@ -1,11 +1,10 @@
-import { AnalyzeService } from "@/services/RepoService";
+import { AnalyzeService, RepoDownloadService } from "@/services/RepoService";
 import { useMutation } from "@tanstack/react-query";
 
 
 export const STEPS = [
   "Validating repository",
-  "Scanning files",
-  "Chunking code",
+  "Scanning and Chunking",
   "Analyzing with AI",
   "Generating documentation",
 ];
@@ -17,18 +16,18 @@ export function useAnalyzeRepo(onStepChange: (step: number) => void) {
       await AnalyzeService.validate(repoPath);
 
       onStepChange(1);
-      await AnalyzeService.scan(repoPath);
+      const chunkAndAnalyzeRes = await AnalyzeService.scan(repoPath);
+      // onStepChange(2);
+      // const chunkRes = await AnalyzeService.chunk(repoPath, projectSize);
 
       onStepChange(2);
-      const chunkRes = await AnalyzeService.chunk(repoPath, projectSize);
-
+      const analyzeRes = await AnalyzeService.analyzeChunks(chunkAndAnalyzeRes.chunks,chunkAndAnalyzeRes.repo_structure );
+      console.log(analyzeRes)
       onStepChange(3);
-      const analyzeRes = await AnalyzeService.analyzeChunks(chunkRes.chunk_preview);
+      const docRes = await AnalyzeService.generateDoc(analyzeRes.analysis_results,chunkAndAnalyzeRes.repo_structure);
 
-      onStepChange(4);
-      const docRes = await AnalyzeService.generateDoc(analyzeRes.summaries);
-
-      return docRes.document;
+      return docRes.documentation;
     },
   });
 }
+

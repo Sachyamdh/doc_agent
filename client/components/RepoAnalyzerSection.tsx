@@ -16,10 +16,18 @@ export default function RepoAnalyzerSection() {
     setCurrentStep(step);
   });
 
-  const handleAnalyze = () => {
+  const handleAnalyze =async () => {
     setDocument("");
+    const response = await fetch("/api/download-repo", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ repoUrl, projectSize }),
+});
+  const data = await response.json();
+  const repoPath = data.repoPath;
+  console.info('Repo Path', repoPath)
     analyzeMutation.mutate(
-      { repoPath: repoUrl, projectSize },
+      { repoPath, projectSize },
       {
         onSuccess: (doc) => setDocument(doc),
       }
