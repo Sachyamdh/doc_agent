@@ -33,9 +33,7 @@ def validate_repo():
     })
 
 
-# ----------------------------
 # Scan repo and create chunks
-# ----------------------------
 @analyze_bp.route("/scan-and-chunk", methods=["POST"])
 def scan_repo():
     logger.info("Scan and chunk endpoint called")
@@ -78,9 +76,7 @@ def scan_repo():
         }), 500
 
 
-# ----------------------------
 # Analyze chunks (MULTI-AGENT)
-# ----------------------------
 @analyze_bp.route("/analyze-chunks", methods=["POST"])
 def analyze_chunks():
     logger.info("Analyze chunks endpoint called")

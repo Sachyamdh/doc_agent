@@ -6,7 +6,10 @@ logger = setup_logger(__name__)
 
 @health_bp.route("/health", methods=["GET"])
 def health():
-    logger.debug("Health check endpoint called")
+    """
+    Health check endpoint used for monitoring and load balancers.
+    """
+    logger.debug("Health check requested")
     return jsonify({
         "status": "ok",
         "service": "doc-agent-backend"
