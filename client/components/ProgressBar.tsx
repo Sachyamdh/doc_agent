@@ -4,6 +4,7 @@ interface ProgressBarProps {
   currentStep: number;
 }
 
+// export this part
 export default function ProgressBar({
   steps,
   currentStep,
